@@ -45,7 +45,7 @@ export default function TeacherRoom() {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [openPurpose, setOpenPurpose] = useState(null);
 
-  const url = "http://localhost:5000";
+  const url = "https://teamformationautomation-backend.onrender.com";
 
   const copyRoomId = () => {
     navigator.clipboard.writeText(roomId);
