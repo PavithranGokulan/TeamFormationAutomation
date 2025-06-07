@@ -17,7 +17,7 @@ export default function StudentRoom() {
     teacherName: "",
   });
 
-  const url = "http://localhost:5000";
+  const url = "https://teamformationautomation-backend.onrender.com";
 
   const { roomId } = useParams();
   const [classes, setClasses] = useState([]);
