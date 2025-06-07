@@ -29,7 +29,7 @@ export default function HomeScreen() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const navigate = useNavigate();
 
-  const url = "http://localhost:5000";
+  const url = "https://teamformationautomation-backend.onrender.com";
 
   const [userInfo, setUserInfo] = useState({
     userid: "",
