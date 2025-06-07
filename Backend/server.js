@@ -17,14 +17,20 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads"));
 
 // Connect to MongoDB
-mongoose.connect("mongodb://127.0.0.1:27017/Team_segregation_app", {
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-});
+})
+.then(() => console.log("✅ Connected to MongoDB Atlas"))
+.catch((err) => console.error("❌ MongoDB connection failed:", err));
+// mongoose.connect("mongodb://127.0.0.1:27017/Team_segregation_app", {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true,
+// });
 
-mongoose.connection.once("open", () => {
-  console.log("✅ Connected to MongoDB");
-});
+// mongoose.connection.once("open", () => {
+//   console.log("✅ Connected to MongoDB");
+// });
 
 app.use("/api/auth", authRoutes);
 app.use('/api', userdetailsRoutes);
