@@ -1,23 +1,21 @@
-const multer = require("multer");
-const path = require("path");
+// const multer = require("multer");
+// const path = require("path");
 const express = require("express");
 const router = express.Router();
 const Room = require("../models/room");
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Make sure this folder exists
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
-  },
-});
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, "uploads/"); // Make sure this folder exists
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+//   },
+// });
 
-const upload = multer({ storage });
-
-router.post("/send", upload.single("file"), async (req, res) => {
+router.post("/send", async (req, res) => {
   try {
-    const { roomId, sender, type, text } = req.body;
+    const { roomId, sender, type, text, fileUrl, fileName } = req.body;
 
     const room = await Room.findOne({ roomId });
     if (!room) return res.status(404).json({ error: "Room not found" });
@@ -34,11 +32,11 @@ router.post("/send", upload.single("file"), async (req, res) => {
       }
       task.content = text.trim();
     } else if (type === "file") {
-      if (!req.file) {
-        return res.status(400).json({ error: "File is required." });
+      if (!fileUrl || !fileName) {
+        return res.status(400).json({ error: "File data is required." });
       }
-      task.filename = req.file.originalname;
-      task.fileUrl = req.file.path; // or req.file.location if using cloud storage
+      task.filename = fileName;
+      task.fileUrl = fileUrl;
     } else {
       return res.status(400).json({ error: "Invalid task type." });
     }

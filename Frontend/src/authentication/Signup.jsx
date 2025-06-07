@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { BookOpen } from "lucide-react";
 import axios from "axios";
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -34,13 +35,13 @@ export default function Signup() {
         "http://localhost:5000/api/auth/signup",
         formData
       );
-      alert("Account created successfully!");
+      TableRowsSplit.success("Account created successfully!");
       navigate("/");
 
       console.log(response.data);
     } catch (error) {
       console.error("Signup error:", error);
-      alert("Signup failed.");
+      toast.error("Signup failed.");
       navigate("/");
     }
   };

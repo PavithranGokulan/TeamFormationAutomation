@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Folder } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
+import { toast } from "react-toastify";
 
 export default function HomeScreen() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -27,6 +28,8 @@ export default function HomeScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const navigate = useNavigate();
+
+  const url = "http://localhost:5000";
 
   const [userInfo, setUserInfo] = useState({
     userid: "",
@@ -50,7 +53,7 @@ export default function HomeScreen() {
 
       // Fetch user profile
       axios
-        .get(`http://localhost:5000/api/profile/${userid}`)
+        .get(`${url}/api/profile/${userid}`)
         .then((response) => {
           // console.log(response.data);
           setUserInfo(response.data.user); // assuming response.data is the user object
@@ -61,7 +64,7 @@ export default function HomeScreen() {
 
       // Fetch user rooms
       axios
-        .get(`http://localhost:5000/api/room/user/${userid}`)
+        .get(`${url}/api/room/user/${userid}`)
         .then((res) => {
           // console.log("User rooms:", res.data);
           setClasses(res.data); // set room data to your state
@@ -110,12 +113,10 @@ export default function HomeScreen() {
         image: getRandomImage(),
         userId: userInfo.userid,
       };
-      await axios.post("http://localhost:5000/api/room/create", newClass);
+      await axios.post(`${url}/api/room/create`, newClass);
 
       // ✅ Fetch the updated rooms list again after creation
-      const res = await axios.get(
-        `http://localhost:5000/api/room/user/${userInfo.userid}`
-      );
+      const res = await axios.get(`${url}/api/room/user/${userInfo.userid}`);
       setClasses(res.data);
       setCreateClassForm({
         roomName: "",
@@ -139,6 +140,7 @@ export default function HomeScreen() {
         console.error("Error creating class:", error.message);
         alert("Failed to create class. Network or unknown error.");
       }
+      toast.success("Class Created Successfully");
     }
   };
 
@@ -159,12 +161,10 @@ export default function HomeScreen() {
         email: userInfo.email,
       };
       // console.log("Payload:", payload);
-      await axios.post("http://localhost:5000/api/room/join", payload);
+      await axios.post(`${url}/api/room/join`, payload);
 
       // ✅ Refresh the class list after successful join
-      const res = await axios.get(
-        `http://localhost:5000/api/room/user/${userInfo.userid}`
-      );
+      const res = await axios.get(`${url}/api/room/user/${userInfo.userid}`);
       setClasses(res.data);
 
       // ✅ Reset the form and close modal
@@ -177,6 +177,7 @@ export default function HomeScreen() {
           "Failed to join class. Try again later."
       );
     }
+    toast.success("Joined Class!");
   };
 
   const handleMoreClick = (event, index) => {
@@ -234,10 +235,7 @@ export default function HomeScreen() {
           .filter((f) => f),
       };
 
-      await axios.put(
-        `http://localhost:5000/api/edit/${userInfo.userid}`,
-        updatedData
-      );
+      await axios.put(`${url}/api/edit/${userInfo.userid}`, updatedData);
       alert("Profile updated successfully!");
       setIsEditing(false);
     } catch (error) {
@@ -632,9 +630,7 @@ export default function HomeScreen() {
                   const roomId = classes[classToDelete].roomId;
 
                   try {
-                    await axios.delete(
-                      `http://localhost:5000/api/room/delete/${roomId}`
-                    );
+                    await axios.delete(`${url}/api/room/delete/${roomId}`);
 
                     // Remove class from local state if delete is successful
                     const updated = [...classes];

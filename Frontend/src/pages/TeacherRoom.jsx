@@ -11,7 +11,8 @@ import axios from "axios";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import Sidebar from "@/components/ui/Sidebar";
-import toast from "react-hot-toast";
+import { toast } from "react-toastify";
+import { supabase } from "../supabaseClient";
 
 export default function TeacherRoom() {
   const navigate = useNavigate();
@@ -44,6 +45,8 @@ export default function TeacherRoom() {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [openPurpose, setOpenPurpose] = useState(null);
 
+  const url = "http://localhost:5000";
+
   const copyRoomId = () => {
     navigator.clipboard.writeText(roomId);
     alert("Room code copied!");
@@ -65,7 +68,7 @@ export default function TeacherRoom() {
       fetchClassworkTasks();
       // Fetch room details (students, room name, teacher)
       axios
-        .get(`http://localhost:5000/api/room/${roomId}`)
+        .get(`${url}/api/room/${roomId}`)
         .then((res) => {
           const data = res.data;
 
@@ -101,7 +104,7 @@ export default function TeacherRoom() {
       const userid = decoded.userid;
 
       axios
-        .get(`http://localhost:5000/api/profile/${userid}`)
+        .get(`${url}/api/profile/${userid}`)
         .then((response) => {
           // console.log(response.data);
           setUserInfo(response.data.user); // assuming response.data is the user object
@@ -111,7 +114,7 @@ export default function TeacherRoom() {
         });
 
       axios
-        .get(`http://localhost:5000/api/room/user/${userid}`)
+        .get(`${url}/api/room/user/${userid}`)
         .then((res) => {
           setClasses(res.data);
         })
@@ -127,15 +130,11 @@ export default function TeacherRoom() {
     e.preventDefault();
 
     if (!purposeName.trim()) {
-      alert("Please enter the name of the assignment/project/hackathon.");
+      toast.alert("Please enter the name of the assignment/project/hackathon.");
       return;
     }
     if (!students || students.length === 0) {
-      toast("No students in your class.", { icon: "❌" });
-      return;
-    }
-    if (!userInfo.friends || userInfo.friends.length === 0) {
-      alert("No Friends! Kindly add friends in Profile");
+      toast.error("No students in your class.");
       return;
     }
 
@@ -144,18 +143,18 @@ export default function TeacherRoom() {
       .filter(([key, value]) => value)
       .map(([key]) => key);
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/team/segregate",
-        {
-          roomId,
-          purpose_type: purposeType,
-          purpose: purposeName,
-          teamSize,
-          segregateBy,
-          students,
-        }
-      );
-
+      const response = await axios.post(`${url}/api/team/segregate`, {
+        roomId,
+        purpose_type: purposeType,
+        purpose: purposeName,
+        teamSize,
+        segregateBy,
+        students,
+      });
+      console.log(response.status);
+      if (response.status == 201) {
+        toast.success("Teams Formed Successfully");
+      }
       const backendTeams = response.data.teams;
 
       const purposeKey = `${purposeType}: ${purposeName}`;
@@ -183,15 +182,23 @@ export default function TeacherRoom() {
       });
     } catch (err) {
       console.error("Failed to form teams:", err);
-      alert("Something went wrong while forming teams.");
+      const errorMsg = err.response?.data?.error;
+
+      if (errorMsg === "Ask students to add friends in profile") {
+        toast.error("Ask students to add friends in profile.");
+      } else if (errorMsg === "Purpose already exists") {
+        toast.error(
+          "Purpose already exists. Please choose a different purpose."
+        );
+      } else {
+        toast.error("Something went wrong while forming teams.");
+      }
     }
   };
 
   const fetchExistingTeams = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:5000/api/team/${roomId}`
-      );
+      const response = await axios.get(`${url}/api/team/${roomId}`);
       const teams = response.data.allteams;
 
       // Group by purposeType:purpose
@@ -223,7 +230,7 @@ export default function TeacherRoom() {
     }
     setClassworkTasks((prev) => {
       if (prev[trimmedTask]) {
-        alert("This task already exists.");
+        toast.alert("This task already exists.");
         return prev;
       }
       return { ...prev, [trimmedTask]: true };
@@ -237,13 +244,13 @@ export default function TeacherRoom() {
       "Are you sure you want to delete this task?"
     );
     if (!confirmed) {
-      toast("Task deletion cancelled.", { icon: "❌" });
+      toast.warn("Task deletion cancelled.");
       return;
     }
 
     try {
       await axios.delete(
-        `http://localhost:5000/api/room/taskdelete/${roomId}/tasks/${taskId}`
+        `${url}/api/room/taskdelete/${roomId}/tasks/${taskId}`
       );
 
       // Remove from UI immediately
@@ -262,50 +269,76 @@ export default function TeacherRoom() {
   const handleClassworkSubmit = async (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
-    formData.append("roomId", roomId);
-    formData.append("sender", roomInfo.teacherName);
-    formData.append("type", selectedType);
+    if (!roomInfo?.teacherName) {
+      alert("Teacher name is missing.");
+      return;
+    }
+
+    let payload = {
+      roomId,
+      sender: roomInfo.teacherName,
+      type: selectedType,
+    };
 
     if (selectedType === "text") {
       if (!taskText.trim()) {
         alert("Please enter a task description.");
         return;
       }
-      formData.append("text", taskText);
+      payload.text = taskText.trim();
     } else {
       if (!selectedFile) {
         alert("Please select a file to upload.");
         return;
       }
-      formData.append("file", selectedFile);
+
+      const fileName = `${Date.now()}-${selectedFile.name}`;
+
+      const { data, error } = await supabase.storage
+        .from("teamformationautomationfiles") // Your Supabase bucket
+        .upload(fileName, selectedFile);
+
+      if (error) {
+        console.error("Supabase upload error:", error.message);
+        alert("File upload failed.");
+        return;
+      }
+
+      const { data: signedUrlData, error: signedUrlError } =
+        await supabase.storage
+          .from("teamformationautomationfiles")
+          .createSignedUrl(fileName, 60); // URL valid for 60 seconds
+
+      if (signedUrlError) {
+        console.error("Error creating signed URL:", signedUrlError.message);
+        alert("Failed to generate file URL.");
+        return;
+      }
+
+      payload.fileUrl = signedUrlData.signedUrl;
+      payload.fileName = selectedFile.name;
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/tasks/send", {
-        method: "POST",
-        body: formData,
+      const response = await axios.post(`${url}/api/tasks/send`, payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        toast.success("Task Added successfully.");
-        // Optionally reset form inputs here
-        setTaskText("");
-        setSelectedFile(null);
-        await fetchClassworkTasks();
-      } else {
-        console.error("Upload failed:", result.error);
-      }
+      toast.success("Task added successfully.");
+      setTaskText("");
+      setSelectedFile(null);
+      await fetchClassworkTasks();
     } catch (error) {
-      console.error("Failed to upload task", error);
+      console.error("Failed to upload task:", error);
+      toast.error("Failed to upload task.");
     }
   };
 
   const fetchClassworkTasks = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${roomId}`);
+      const res = await fetch(`${url}/api/tasks/${roomId}`);
       const data = await res.json();
       // console.log("Fetched Tasks", data);
       setClassworkTasks(data); // Make sure this matches your backend response

@@ -1,18 +1,19 @@
 // src/App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
 import HomeScreen from "./pages/HomeScreen";
 import TeacherRoom from "./pages/TeacherRoom";
 import StudentRoom from "./pages/StudentRoom";
 import Login from "./authentication/Login";
 import Signup from "./authentication/Signup";
 import ProtectedRoute from "./components/ui/ProtectedRoute";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function App() {
   return (
     <Router>
-      <Toaster position="top-center" reverseOrder={false} />
+      <ToastContainer position="top-right" />
       <Routes>
         <Route
           path="/HomePage"

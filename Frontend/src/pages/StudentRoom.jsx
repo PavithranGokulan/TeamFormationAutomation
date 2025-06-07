@@ -17,6 +17,8 @@ export default function StudentRoom() {
     teacherName: "",
   });
 
+  const url = "http://localhost:5000";
+
   const { roomId } = useParams();
   const [classes, setClasses] = useState([]);
 
@@ -62,7 +64,7 @@ export default function StudentRoom() {
       fetchClassworkTasks();
       // Fetch room details (students, room name, teacher)
       axios
-        .get(`http://localhost:5000/api/room/${roomId}`)
+        .get(`${url}/api/room/${roomId}`)
         .then((res) => {
           const data = res.data;
 
@@ -98,7 +100,7 @@ export default function StudentRoom() {
       const userid = decoded.userid;
 
       axios
-        .get(`http://localhost:5000/api/profile/${userid}`)
+        .get(`${url}/api/profile/${userid}`)
         .then((response) => {
           // console.log(response.data);
           setUserInfo(response.data.user); // assuming response.data is the user object
@@ -108,7 +110,7 @@ export default function StudentRoom() {
         });
 
       axios
-        .get(`http://localhost:5000/api/room/user/${userid}`)
+        .get(`${url}/api/room/user/${userid}`)
         .then((res) => {
           setClasses(res.data);
         })
@@ -122,7 +124,7 @@ export default function StudentRoom() {
 
   const fetchClassworkTasks = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${roomId}`);
+      const res = await fetch(`${url}/api/tasks/${roomId}`);
       const data = await res.json();
       setClassworkTasks(data); // Make sure this matches your backend response
     } catch (err) {
@@ -132,9 +134,7 @@ export default function StudentRoom() {
 
   const fetchExistingTeams = async () => {
     try {
-      const response = await axios.get(
-        `http://localhost:5000/api/team/${roomId}`
-      );
+      const response = await axios.get(`${url}/api/team/${roomId}`);
       const teams = response.data.allteams;
 
       // Group by purposeType:purpose

@@ -6,6 +6,8 @@ import { BookOpen } from "lucide-react";
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -30,7 +32,17 @@ export default function Login() {
         "http://localhost:5000/api/auth/login",
         formData
       );
-      alert("Login successful!");
+      if (response.status == 200) {
+        toast.success("Login successful!", {
+          position: "top-right", // Customize the position as needed
+          autoClose: 5000, // Time to auto-close in milliseconds
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progressStyle: { background: "blue" }, // Optional: Customize progress bar
+        });
+      }
 
       // optionally save token or user info here
       localStorage.setItem("token", response.data.token);

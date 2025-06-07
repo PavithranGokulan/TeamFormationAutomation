@@ -142,11 +142,22 @@ function combineBalanceStrategies(students, teamSize, criteria) {
 router.post("/segregate", async(req, res) => {
   try {
     const { roomId, purpose_type, purpose, teamSize, segregateBy, students } = req.body;
-    console.log(segregateBy);
-    console.log(students);
+    // console.log("constraint:",segregateBy);
+    // console.log(students);
 
     if (!roomId || !purpose || !teamSize || !segregateBy || !students || !Array.isArray(students)) {
       return res.status(400).json({ error: "Invalid input format" });
+    }
+
+    const existingTeam = await Team.findOne({ roomId, purpose });
+    if (existingTeam) {
+      return res.status(409).json({ error: "Purpose already exists" });
+    }
+
+    // ✅ Check if any student has friends
+    const hasFriends = students.some(student => Array.isArray(student.friends) && student.friends.length > 0);
+    if (segregateBy.includes("friends") && !hasFriends) {
+      return res.status(400).json({ error: "Ask students to add friends in profile" });
     }
 
     const teams = combineBalanceStrategies(students, teamSize, segregateBy);
@@ -164,7 +175,7 @@ router.post("/segregate", async(req, res) => {
         works: [],
       });
       await newTeam.save();
-      console.log("Saved to Database");
+      // console.log("Saved to Database");
       teamDocs.push(newTeam);
     }catch (err) {
     console.error("Error saving team:", teamName, err);
