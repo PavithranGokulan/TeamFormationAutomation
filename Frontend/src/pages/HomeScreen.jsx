@@ -81,6 +81,15 @@ export default function HomeScreen() {
     "/class3.jpg",
     "/class4.jpg",
     "/class5.jpg",
+    "/class6.jpg",
+    "/class7.jpg",
+    "/class8.jpg",
+    "/class9.jpg",
+    "/class10.jpg",
+    "/class11.jpg",
+    "/class12.jpg",
+    "/class13.jpg",
+    "/class14.jpg",
   ];
 
   const getRandomImage = () => {
