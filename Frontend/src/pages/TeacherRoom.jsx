@@ -304,18 +304,11 @@ export default function TeacherRoom() {
         return;
       }
 
-      const { data: signedUrlData, error: signedUrlError } =
-        await supabase.storage
-          .from("teamformationautomationfiles")
-          .createSignedUrl(fileName, 60); // URL valid for 60 seconds
+      const { publicUrl } = supabase.storage
+        .from("teamformationautomationfiles")
+        .getPublicUrl(fileName).data;
 
-      if (signedUrlError) {
-        console.error("Error creating signed URL:", signedUrlError.message);
-        alert("Failed to generate file URL.");
-        return;
-      }
-
-      payload.fileUrl = signedUrlData.signedUrl;
+      payload.fileUrl = publicUrl;
       payload.fileName = selectedFile.name;
     }
 

@@ -32,6 +32,7 @@ export default function Login() {
         "https://teamformationautomation-backend.onrender.com/api/auth/login",
         formData
       );
+      console.log(response);
       if (response.status == 200) {
         toast.success("Login successful!", {
           position: "top-right", // Customize the position as needed
