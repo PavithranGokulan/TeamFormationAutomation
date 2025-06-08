@@ -35,7 +35,7 @@ export default function Signup() {
         "https://teamformationautomation-backend.onrender.com/api/auth/signup",
         formData
       );
-      TableRowsSplit.success("Account created successfully!");
+      toast.success("Account created successfully!");
       navigate("/");
 
       console.log(response.data);
